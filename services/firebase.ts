@@ -3,8 +3,10 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// In production, these should be set in your hosting provider's (Vercel/Netlify) Dashboard
 const firebaseConfig = {
-  apiKey: "AIzaSyCkTLcQ_f__zMKG4fK-3hPWs-x5sOlMf1g",
+  // Added any casting to fix the TypeScript error: Property 'env' does not exist on type 'ImportMeta'
+  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || "AIzaSyCkTLcQ_f__zMKG4fK-3hPWs-x5sOlMf1g",
   authDomain: "gamerz-kit.firebaseapp.com",
   projectId: "gamerz-kit",
   storageBucket: "gamerz-kit.firebasestorage.app",
