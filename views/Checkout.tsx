@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Product } from '../types';
@@ -12,6 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const Checkout: React.FC<{ user: any }> = ({ user }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -22,6 +23,9 @@ const Checkout: React.FC<{ user: any }> = ({ user }) => {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [proof, setProof] = useState<File | null>(null);
+
+  const queryParams = new URLSearchParams(location.search);
+  const quantity = parseInt(queryParams.get('qty') || '1');
 
   useEffect(() => {
     if (!user) {
@@ -47,7 +51,8 @@ const Checkout: React.FC<{ user: any }> = ({ user }) => {
       await addDoc(collection(db, 'orders'), {
         productId: product!.id,
         productName: product!.name,
-        amount: product!.price,
+        amount: product!.price * quantity,
+        quantity,
         userId: user.uid,
         userName: user.displayName || 'Anonymous User',
         receiverName,
@@ -69,167 +74,57 @@ const Checkout: React.FC<{ user: any }> = ({ user }) => {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (!product) return <div className="text-center py-20 text-red-500">Gear not found.</div>;
+  if (!product) return <div className="text-center py-20 text-red-500 font-rajdhani">Gear not found.</div>;
 
   if (submitted) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/5 border border-white/10 p-12 space-y-6"
-        >
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-[#39ff14]/20 rounded-full text-[#39ff14] mb-4">
-            <CheckCircle2 size={64} />
-          </div>
-          <h1 className="font-orbitron text-4xl font-black text-white uppercase tracking-tighter">Transmission Successful</h1>
-          <p className="text-gray-400 text-lg">Your acquisition request is being processed by Central Command. Verifying payment status now.</p>
-          <div className="flex gap-4 justify-center pt-6">
-            <button 
-              onClick={() => navigate('/orders')}
-              className="bg-[#39ff14] text-black font-orbitron font-bold px-8 py-3 uppercase tracking-widest hover:brightness-110 transition-all"
-            >
-              Check Order Status
-            </button>
-          </div>
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white/5 border border-white/10 p-12 space-y-6">
+          <CheckCircle2 size={64} className="text-[#39ff14] mx-auto mb-4" />
+          <h1 className="font-rajdhani text-4xl font-black text-white uppercase tracking-tighter">Transmission Successful</h1>
+          <p className="text-gray-400 text-lg font-rajdhani">Order for {quantity} units registered. Verifying signal...</p>
+          <button onClick={() => navigate('/orders')} className="bg-[#39ff14] text-black font-michroma font-bold px-8 py-3 uppercase tracking-widest text-xs">History Log</button>
         </motion.div>
       </div>
     );
   }
 
+  const totalAmount = product.price * quantity;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 md:py-20">
+    <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 font-rajdhani">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         <div className="space-y-10">
           <div>
-            <h1 className="font-orbitron text-3xl font-black text-white uppercase tracking-tighter mb-4">
-              Phase 1 : <span className="text-[#39ff14]">Secure Payment</span>
-            </h1>
-            <p className="text-gray-400 leading-relaxed">
-              Scan the unique encrypted gateway below to finalize your acquisition of the <span className="text-[#39ff14] font-bold">{product.name}</span>. Total due: <span className="text-[#39ff14] font-bold">₹{product.price}</span>.
-            </p>
-          </div>
-
-          <div className="mx-auto max-w-sm">
-            <div className="bg-black border border-white/10 p-4">
-              <img src={product.qrCodeUrl} alt="Payment QR" className="w-full aspect-square object-contain" />
-              <div className="mt-4 flex items-center justify-center gap-2 text-[#39ff14] font-orbitron text-[10px] tracking-[0.3em] uppercase">
-                <QrCode size={14} /> take screenshot and scan
+            <h1 className="font-rajdhani text-4xl font-black text-white uppercase tracking-tighter mb-4">Phase 1: <span className="text-[#39ff14]">Acquisition</span></h1>
+            <div className="p-6 bg-white/5 border border-white/10 mb-6">
+              <h3 className="text-white font-bold text-xl mb-2">{product.name}</h3>
+              <div className="flex justify-between text-gray-400 font-michroma text-[10px] uppercase">
+                <span>Signal Strength: {quantity} Units</span>
+                <span>Total Payload: ₹{totalAmount}</span>
               </div>
             </div>
+            <p className="text-gray-400">Scan the secure gateway below. Total amount required: <span className="text-[#39ff14] font-bold">₹{totalAmount}</span></p>
           </div>
-
-          <div className="bg-white/5 border border-white/10 p-6 flex items-start gap-4">
-            <ShieldCheck className="text-[#39ff14] shrink-0" size={24} />
-            <div className="text-xs text-gray-400 leading-relaxed uppercase tracking-wider">
-              <p className="font-bold text-white mb-1">Encrypted Gateway Active</p>
-              Your transaction is secured by AES-256 end-to-end encryption. Any fraudulent activity will be flagged and reported to network security.
-            </div>
-          </div>
+          <div className="mx-auto max-w-sm"><img src={product.qrCodeUrl} className="w-full aspect-square border-4 border-white/5" alt="QR" /></div>
         </div>
 
-        <div className="space-y-10">
-          <div>
-            <h2 className="font-orbitron text-3xl font-black text-white uppercase tracking-tighter mb-4">
-              Phase 2 : <span className="text-[#39ff14]">Proof & Delivery</span>
-            </h2>
-            <p className="text-gray-400 leading-relaxed">
-              Complete your profile for shipping and upload your transaction receipt.
-            </p>
+        <form onSubmit={handleSubmitOrder} className="bg-white/5 border border-white/10 p-8 space-y-6">
+          <h2 className="font-rajdhani text-3xl font-black text-white uppercase tracking-tighter">Phase 2: <span className="text-[#39ff14]">Signal Lock</span></h2>
+          <div className="space-y-4">
+            <input required placeholder="Receiver Name" value={receiverName} onChange={e => setReceiverName(e.target.value)} className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#39ff14] outline-none" />
+            <textarea required rows={3} placeholder="Full Shipping Address" value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#39ff14] outline-none" />
+            <input required placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#39ff14] outline-none" />
+            <input required placeholder="Transaction / UTR ID" value={utr} onChange={e => setUtr(e.target.value)} className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#39ff14] outline-none font-mono" />
+            <div className="relative border-2 border-dashed border-white/10 p-6 text-center cursor-pointer hover:border-[#39ff14]">
+              <input required type="file" accept="image/*" onChange={e => setProof(e.target.files ? e.target.files[0] : null)} className="absolute inset-0 opacity-0 cursor-pointer" />
+              <div className="text-gray-500 uppercase text-xs font-michroma">{proof ? proof.name : "Upload Payment Receipt"}</div>
+            </div>
           </div>
-
-          <form onSubmit={handleSubmitOrder} className="bg-white/5 border border-white/10 p-8 space-y-6">
-            <div className="space-y-4">
-              <label className="block text-xs font-orbitron text-white uppercase tracking-widest font-bold">Receiver's Full Name</label>
-              <div className="relative">
-                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                <input 
-                  required
-                  type="text" 
-                  placeholder="The person receiving the gear" 
-                  value={receiverName}
-                  onChange={e => setReceiverName(e.target.value)}
-                  className="w-full bg-black border border-white/10 p-4 pl-12 text-sm focus:border-[#39ff14] outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-xs font-orbitron text-white uppercase tracking-widest font-bold">Shipping Address</label>
-              <div className="relative">
-                <MapPin className="absolute left-4 top-4 text-gray-500" size={18} />
-                <textarea 
-                  required
-                  rows={3}
-                  placeholder="Street, City, Zip Code, Landmark" 
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  className="w-full bg-black border border-white/10 p-4 pl-12 text-sm focus:border-[#39ff14] outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-xs font-orbitron text-white uppercase tracking-widest font-bold">Phone Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                <input 
-                  required
-                  type="tel" 
-                  placeholder="Ex: +91 9876543210" 
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  className="w-full bg-black border border-white/10 p-4 pl-12 text-sm focus:border-[#39ff14] outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-xs font-orbitron text-white uppercase tracking-widest font-bold">Transaction / UTR ID</label>
-              <input 
-                required
-                type="text" 
-                placeholder="Ex: 123456789012" 
-                value={utr}
-                onChange={e => setUtr(e.target.value)}
-                className="w-full bg-black border border-white/10 p-4 font-mono text-sm focus:border-[#39ff14] outline-none transition-all"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-xs font-orbitron text-white uppercase tracking-widest font-bold">Payment Screenshot</label>
-              <div className="relative border-2 border-dashed border-white/10 hover:border-[#39ff14]/50 transition-colors p-6 text-center cursor-pointer group">
-                <input 
-                  required
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => setProof(e.target.files ? e.target.files[0] : null)}
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                />
-                <div className="space-y-2">
-                  <div className="mx-auto w-10 h-10 bg-white/5 flex items-center justify-center rounded-full group-hover:text-[#39ff14] transition-colors">
-                    <Upload size={20} />
-                  </div>
-                  <div className="text-sm">
-                    {proof ? (
-                      <span className="text-[#39ff14] font-bold">{proof.name}</span>
-                    ) : (
-                      <span className="text-white font-bold">Click to upload receipt</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button 
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-[#39ff14] text-black font-orbitron font-black text-xl py-6 uppercase tracking-tighter hover:brightness-110 transition-all disabled:opacity-50"
-            >
-              {submitting ? 'PROCESSING SIGNAL...' : 'FINALIZE ACQUISITION'}
-            </button>
-          </form>
-        </div>
+          <button type="submit" disabled={submitting} className="w-full bg-[#39ff14] text-black font-michroma font-black text-lg py-6 uppercase hover:brightness-110 transition-all disabled:opacity-50">
+            {submitting ? 'SYNCHRONIZING...' : 'COMMIT ORDER'}
+          </button>
+        </form>
       </div>
     </div>
   );

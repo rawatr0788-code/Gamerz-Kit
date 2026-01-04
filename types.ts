@@ -15,6 +15,7 @@ export interface Order {
   productId: string;
   productName: string;
   amount: number;
+  quantity: number;
   userId: string;
   userName: string;
   receiverName: string;
