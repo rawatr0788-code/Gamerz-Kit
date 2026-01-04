@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Fingerprint, ChevronLeft } from 'lucide-react';
+import { User, Mail, Shield, Activity, ChevronLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface ProfileProps {
@@ -34,7 +34,6 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white/5 border border-white/10 p-8 md:p-12 relative overflow-hidden"
       >
-        {/* Decorative corner */}
         <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-[#39ff14]/30" />
         
         <div className="flex flex-col items-center mb-12">
@@ -68,10 +67,10 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
           </div>
 
           <div className="space-y-2 group">
-            <label className="text-[10px] font-orbitron text-gray-500 uppercase tracking-[0.2em] font-bold group-hover:text-[#39ff14] transition-colors">System ID (UID)</label>
+            <label className="text-[10px] font-orbitron text-gray-500 uppercase tracking-[0.2em] font-bold group-hover:text-[#39ff14] transition-colors">System Security (Status)</label>
             <div className="flex items-center gap-4 bg-black border border-white/10 p-4 transition-all group-hover:border-[#39ff14]/30">
-              <Fingerprint size={18} className="text-[#39ff14]/50" />
-              <span className="text-gray-400 font-mono text-xs">{user.uid}</span>
+              <Activity size={18} className="text-[#39ff14]/50" />
+              <span className="text-[#39ff14] font-orbitron text-xs uppercase font-black">Link Active</span>
             </div>
           </div>
         </div>
